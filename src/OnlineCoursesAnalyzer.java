@@ -3,6 +3,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 
@@ -65,34 +66,38 @@ public class OnlineCoursesAnalyzer {
                 )
         );
         Map<String, Integer> sorted_map = unsortedMap.entrySet().stream()
-                .sorted(Comparator.comparingInt((Map.Entry<String, Integer> c) -> c.getValue()).reversed().thenComparing(Map.Entry::getKey))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+                .sorted(Comparator.comparingInt((Entry<String, Integer> c) -> c.getValue()).reversed().thenComparing(Entry::getKey))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
         return sorted_map;
     }
 
     //3
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
-        Map<String, List<List<String>>> ret = new HashMap<>();
+        Map<String, List<Set<String>>> res = new HashMap<>();
         courses.forEach(course -> {
-            boolean isIndependentCourse = course.getInstructors().length == 0;
+            boolean isIndependentCourse = course.getInstructors().length == 1;
 
             for (final String instructor : course.getInstructors()) {
-                if (!ret.containsKey(instructor)) {
-                    List<List<String>> list = new ArrayList<>();
-                    list.add(new ArrayList<>());
-                    list.add(new ArrayList<>());
-                    ret.put(instructor, list);
+                if (!res.containsKey(instructor)) {
+                    List<Set<String>> list = new ArrayList<>();
+                    list.add(new HashSet<>());
+                    list.add(new HashSet<>());
+                    res.put(instructor, list);
                 }
-                List<List<String>> outerList = ret.get(instructor);
-                List coursesList = isIndependentCourse ? outerList.get(0) : outerList.get(1);
+                List<Set<String>> outerList = res.get(instructor);
+                Set<String> coursesList = isIndependentCourse ? outerList.get(0) : outerList.get(1);
 
-                coursesList.add(course);
+                coursesList.add(course.getTitle());
             }
         });
-        ret.forEach((k, v) -> {
-            v.get(0).sort(Comparator.naturalOrder());
-            v.get(1).sort(Comparator.naturalOrder());
-        });
+        Map<String, List<List<String>>> ret = res.entrySet().stream()
+                        .collect(Collectors.toMap(Entry::getKey, l -> {
+                            List<List<String>> listOfList = new ArrayList<>();
+                            List<Set<String>> listOfSet = l.getValue();
+                            listOfList.add(listOfSet.get(0).stream().sorted(Comparator.naturalOrder()).toList());
+                            listOfList.add(listOfSet.get(1).stream().sorted(Comparator.naturalOrder()).toList());
+                            return listOfList;
+                        }));
         return ret;
     }
 
