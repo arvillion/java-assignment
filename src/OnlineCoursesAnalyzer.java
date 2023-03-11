@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-
 
 /**
  * This is just a demo for you, please run it on JDK17.
@@ -103,7 +104,79 @@ public class OnlineCoursesAnalyzer {
 
     //4
     public List<String> getCourses(int topK, String by) {
-        return null;
+
+        if (by.equals("hours")) {
+
+            return courses.stream().collect(Collectors.toMap(
+                    Course::getTitle,
+                    Function.identity(),
+                    BinaryOperator.maxBy(Comparator.comparingDouble(Course::getTotalHours))
+            )).entrySet().stream().map(entry -> entry.getValue())
+                    .sorted(
+                            Comparator.comparingDouble(Course::getTotalHours).reversed()
+                                    .thenComparing(Course::getTitle)
+                    )
+                    .limit(topK).map(Course::getTitle)
+                    .toList();
+        } else {
+            return courses.stream().collect(Collectors.toMap(
+                    Course::getTitle,
+                    Function.identity(),
+                    BinaryOperator.maxBy(Comparator.comparingInt(Course::getParticipants))
+            )).entrySet().stream().map(entry -> entry.getValue())
+                    .sorted(
+                            Comparator.comparingInt(Course::getParticipants).reversed()
+                                    .thenComparing(Course::getTitle)
+                    )
+                    .limit(topK).map(Course::getTitle)
+                    .toList();
+        }
+//        class CourseSummary{
+//            double hours;
+//            int participants;
+//
+//            String title;
+//
+//            public double getHours() {
+//                return hours;
+//            }
+//
+//            public String getTitle() {
+//                return title;
+//            }
+//
+//            public int getParticipants() {
+//                return participants;
+//            }
+//
+//            public CourseSummary(double hours, int participants, String title) {
+//                this.hours = hours;
+//                this.participants = participants;
+//                this.title = title;
+//            }
+//        };
+//        Map<String, List<Course>> coursesByTitle = courses.stream().collect(Collectors.groupingBy(
+//                Course::getTitle
+//        ));
+//        List<CourseSummary> courseSummaries = coursesByTitle.entrySet().stream()
+//                .map((Entry<String, List<Course>> entry) -> {
+//                    List<Course> list = entry.getValue();
+//                    double hours = list.stream().mapToDouble(Course::getTotalHours).sum();
+//                    int participants = list.stream().mapToInt(Course::getParticipants).sum();
+//                    return new CourseSummary(hours, participants, entry.getKey());
+//                }).toList();
+//
+//        if (by.equals("hours")) {
+//            return courseSummaries.stream()
+//                    .sorted(
+//                            Comparator.comparingDouble(CourseSummary::getHours).reversed().thenComparing(CourseSummary::getTitle)
+//                    ).limit(topK).map(CourseSummary::getTitle).toList();
+//        } else {
+//            return courseSummaries.stream()
+//                    .sorted(
+//                            Comparator.comparingInt(CourseSummary::getParticipants).reversed().thenComparing(CourseSummary::getTitle)
+//                    ).limit(topK).map(CourseSummary::getTitle).toList();
+//        }
     }
 
     //5
@@ -143,6 +216,10 @@ class Course {
     double percentMale;
     double percentFemale;
     double percentDegree;
+
+    public double getTotalHours() {
+        return totalHours;
+    }
 
     public String getTitle() {
         return title;
