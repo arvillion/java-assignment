@@ -3,6 +3,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
+
 
 /**
  * This is just a demo for you, please run it on JDK17.
@@ -45,17 +47,53 @@ public class OnlineCoursesAnalyzer {
 
     //1
     public Map<String, Integer> getPtcpCountByInst() {
-        return null;
+        return courses.stream().collect(
+            Collectors.groupingBy(
+                Course::getInstitution,
+                TreeMap::new,
+                Collectors.summingInt(Course::getParticipants)
+            )
+        );
     }
 
     //2
     public Map<String, Integer> getPtcpCountByInstAndSubject() {
-        return null;
+        Map<String, Integer> unsortedMap =  courses.stream().collect(
+                Collectors.groupingBy(
+                        course -> course.getInstitution() + '-' + course.getSubject(),
+                        Collectors.summingInt(Course::getParticipants)
+                )
+        );
+        Map<String, Integer> sorted_map = unsortedMap.entrySet().stream()
+                .sorted(Comparator.comparingInt((Map.Entry<String, Integer> c) -> c.getValue()).thenComparing(Map.Entry::getKey))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+        return sorted_map;
     }
 
     //3
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
-        return null;
+        Map<String, List<List<String>>> ret = new HashMap<>();
+        courses.forEach(course -> {
+            boolean isIndependentCourse = course.getInstructors().length == 0;
+
+            for (final String instructor : course.getInstructors()) {
+                if (!ret.containsKey(instructor)) {
+                    List<List<String>> list = new ArrayList<>();
+                    list.add(new ArrayList<>());
+                    list.add(new ArrayList<>());
+                    ret.put(instructor, list);
+                }
+                List<List<String>> outerList = ret.get(instructor);
+                List coursesList = isIndependentCourse ? outerList.get(0) : outerList.get(1);
+
+                coursesList.add(course);
+            }
+        });
+        ret.forEach((k, v) -> {
+            v.get(0).sort(Comparator.naturalOrder());
+            v.get(1).sort(Comparator.naturalOrder());
+        });
+        return ret;
     }
 
     //4
@@ -80,7 +118,8 @@ class Course {
     String number;
     Date launchDate;
     String title;
-    String instructors;
+
+    String[] instructors;
     String subject;
     int year;
     int honorCode;
@@ -100,6 +139,27 @@ class Course {
     double percentFemale;
     double percentDegree;
 
+    public String getTitle() {
+        return title;
+    }
+
+    public int getParticipants() {
+        return participants;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public String getInstitution() {
+        return institution;
+    }
+
+    public String[] getInstructors() {
+        return instructors;
+    }
+
+
     public Course(String institution, String number, Date launchDate,
                   String title, String instructors, String subject,
                   int year, int honorCode, int participants,
@@ -117,7 +177,7 @@ class Course {
         this.title = title;
         if (instructors.startsWith("\"")) instructors = instructors.substring(1);
         if (instructors.endsWith("\"")) instructors = instructors.substring(0, instructors.length() - 1);
-        this.instructors = instructors;
+        this.instructors = instructors.split(", ");
         if (subject.startsWith("\"")) subject = subject.substring(1);
         if (subject.endsWith("\"")) subject = subject.substring(0, subject.length() - 1);
         this.subject = subject;
