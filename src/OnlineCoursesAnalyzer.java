@@ -131,57 +131,17 @@ public class OnlineCoursesAnalyzer {
                     .limit(topK).map(Course::getTitle)
                     .toList();
         }
-//        class CourseSummary{
-//            double hours;
-//            int participants;
-//
-//            String title;
-//
-//            public double getHours() {
-//                return hours;
-//            }
-//
-//            public String getTitle() {
-//                return title;
-//            }
-//
-//            public int getParticipants() {
-//                return participants;
-//            }
-//
-//            public CourseSummary(double hours, int participants, String title) {
-//                this.hours = hours;
-//                this.participants = participants;
-//                this.title = title;
-//            }
-//        };
-//        Map<String, List<Course>> coursesByTitle = courses.stream().collect(Collectors.groupingBy(
-//                Course::getTitle
-//        ));
-//        List<CourseSummary> courseSummaries = coursesByTitle.entrySet().stream()
-//                .map((Entry<String, List<Course>> entry) -> {
-//                    List<Course> list = entry.getValue();
-//                    double hours = list.stream().mapToDouble(Course::getTotalHours).sum();
-//                    int participants = list.stream().mapToInt(Course::getParticipants).sum();
-//                    return new CourseSummary(hours, participants, entry.getKey());
-//                }).toList();
-//
-//        if (by.equals("hours")) {
-//            return courseSummaries.stream()
-//                    .sorted(
-//                            Comparator.comparingDouble(CourseSummary::getHours).reversed().thenComparing(CourseSummary::getTitle)
-//                    ).limit(topK).map(CourseSummary::getTitle).toList();
-//        } else {
-//            return courseSummaries.stream()
-//                    .sorted(
-//                            Comparator.comparingInt(CourseSummary::getParticipants).reversed().thenComparing(CourseSummary::getTitle)
-//                    ).limit(topK).map(CourseSummary::getTitle).toList();
-//        }
     }
 
     //5
     public List<String> searchCourses(String courseSubject, double percentAudited, double totalCourseHours) {
-        return null;
+        String finalCourseSubject = courseSubject.toLowerCase();
+        return courses.stream().filter(
+                c -> c.getPercentAudited() >= percentAudited &&
+                     c.getTotalHours() <= totalCourseHours   &&
+                     c.getSubject().toLowerCase().contains(finalCourseSubject)
+        ).map(Course::getTitle).collect(Collectors.toSet())
+                .stream().sorted(Comparator.naturalOrder()).toList();
     }
 
     //6
@@ -217,6 +177,10 @@ class Course {
     double percentFemale;
     double percentDegree;
 
+    public double getPercentAudited() {
+        return percentAudited;
+    }
+
     public double getTotalHours() {
         return totalHours;
     }
@@ -229,7 +193,7 @@ class Course {
         return participants;
     }
 
-    public String getSubject() {
+    public String  getSubject() {
         return subject;
     }
 
