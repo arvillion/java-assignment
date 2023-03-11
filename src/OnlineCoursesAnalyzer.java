@@ -65,7 +65,7 @@ public class OnlineCoursesAnalyzer {
                 )
         );
         Map<String, Integer> sorted_map = unsortedMap.entrySet().stream()
-                .sorted(Comparator.comparingInt((Map.Entry<String, Integer> c) -> c.getValue()).thenComparing(Map.Entry::getKey))
+                .sorted(Comparator.comparingInt((Map.Entry<String, Integer> c) -> c.getValue()).reversed().thenComparing(Map.Entry::getKey))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
         return sorted_map;
     }
