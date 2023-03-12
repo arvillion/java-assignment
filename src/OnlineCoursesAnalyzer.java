@@ -146,7 +146,27 @@ public class OnlineCoursesAnalyzer {
 
     //6
     public List<String> recommendCourses(int age, int gender, int isBachelorOrHigher) {
-        return null;
+        Map<String, List<Course>> coursesById = courses.stream().collect(Collectors.groupingBy(Course::getNumber));
+        Map<String, Double> courseSimilarty = coursesById.entrySet().stream().collect(Collectors.toMap(
+                (Entry<String, List<Course>> entry) -> {
+                    List<Course> list = entry.getValue();
+                    list.sort(Comparator.comparing(Course::getLaunchDate).reversed());
+                    return list.get(0).getTitle();
+                },
+                (Entry<String, List<Course>> entry) -> {
+                    List<Course> list = entry.getValue();
+                    double avgMedianAge = list.stream().mapToDouble(Course::getMedianAge).average().getAsDouble();
+                    double avgMale = list.stream().mapToDouble(Course::getPercentMale).average().getAsDouble();
+                    double avgDegree = list.stream().mapToDouble(Course::getPercentDegree).average().getAsDouble();
+                    return Math.pow(age - avgMedianAge, 2) + Math.pow(gender*100 - avgMale, 2) + Math.pow(isBachelorOrHigher*100 - avgDegree, 2);
+                },
+                (x, y) -> Math.min(x, y)
+        ));
+        return courseSimilarty.entrySet().stream()
+                .sorted(Entry.<String, Double>comparingByValue().thenComparing((Entry<String, Double> entry) -> entry.getKey()))
+                .limit(10)
+                .map(Entry::getKey)
+                .toList();
     }
 
 }
@@ -176,6 +196,26 @@ class Course {
     double percentMale;
     double percentFemale;
     double percentDegree;
+
+    public Date getLaunchDate() {
+        return launchDate;
+    }
+
+    public double getMedianAge() {
+        return medianAge;
+    }
+
+    public double getPercentMale() {
+        return percentMale;
+    }
+
+    public double getPercentDegree() {
+        return percentDegree;
+    }
+
+    public String getNumber() {
+        return number;
+    }
 
     public double getPercentAudited() {
         return percentAudited;
